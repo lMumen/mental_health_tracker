@@ -33,10 +33,28 @@ export async function getDb() {
         social_engagements INTEGER NOT NULL,
         stress_level INTEGER NOT NULL,
         symptoms TEXT,
+        sleep_disturbances TEXT,
+        log_date TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       );
     `);
+
+    const columns = await db.all('PRAGMA table_info(daily_logs)');
+    if (!columns.some((column) => column.name === 'log_date')) {
+      await db.exec('ALTER TABLE daily_logs ADD COLUMN log_date TEXT');
+      await db.exec("UPDATE daily_logs SET log_date = date(created_at) WHERE log_date IS NULL");
+    }
+    if (!columns.some((column) => column.name === 'sleep_disturbances')) {
+      await db.exec('ALTER TABLE daily_logs ADD COLUMN sleep_disturbances TEXT');
+    }
+
+    await db.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_daily_logs_user_date
+      ON daily_logs(user_id, log_date)
+      WHERE log_date IS NOT NULL;
+    `);
+
     console.log('Database initialized successfully.');
   }
   return db;
