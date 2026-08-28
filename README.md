@@ -68,30 +68,7 @@ npm install
 
 This installs dependencies for the root project, frontend, and backend workspaces.
 
-## 4. Configure Google OAuth
-
-The evaluator credentials should be shared privately and must not be committed to the repository.
-
-To create credentials manually:
-
-1. Open the [Google Cloud Console](https://console.cloud.google.com/).
-2. Create or select a Google Cloud project.
-3. Open **APIs & Services!’ OAuth consent screen**.
-4. Configure the consent screen. If the application remains in testing mode, add the evaluator accounts as test users.
-5. Open **APIs & Services!’ Credentials**.
-6. Select **Create credentials!’ OAuth client ID**.
-7. Choose **Web application**.
-8. Add this Authorized JavaScript origin:
-
-```text
-http://localhost:3000
-```
-
-9. Copy the generated Client ID.
-
-This application verifies the Google ID token using the Client ID. A Google Client Secret is not required by the current authentication flow and must never be exposed in the frontend.
-
-## 5. Create the environment files
+## 4. Create the environment files
 
 ### Frontend
 
@@ -99,12 +76,6 @@ Create `packages/frontend/.env`:
 
 ```env
 VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-```
-
-You can start from the provided example:
-
-```bash
-cp packages/frontend/.env.example packages/frontend/.env
 ```
 
 ### Backend
@@ -120,21 +91,7 @@ APP_TIME_ZONE=America/Santiago
 
 The frontend and backend must use the same Google Client ID.
 
-You can start from the provided example:
-
-```bash
-cp packages/backend/.env.example packages/backend/.env
-```
-
-Generate a suitable JWT secret with Node.js:
-
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-Do not commit either `.env` file.
-
-## 6. Start the application
+## 5. Start the application
 
 From the repository root:
 
@@ -166,39 +123,6 @@ No separate database server or migration command is required.
 5. Use **View trends** and select **3 Months** to inspect the complete example progression.
 6. Use **History** to review the paginated entries.
 
-## Available commands
-
-From the repository root:
-
-```bash
-npm run dev
-npm run dev:frontend
-npm run dev:backend
-npm run build --workspace=frontend
-npm run lint --workspace=frontend
-npm run start --workspace=backend
-```
-
-## Production build
-
-Build the frontend:
-
-```bash
-npm run build --workspace=frontend
-```
-
-The static output is generated in `packages/frontend/dist`.
-
-Start the backend:
-
-```bash
-npm run start --workspace=backend
-```
-
-For production hosting, serve the frontend build from a static host and route `/api` and `/socket.io` to the Node.js backend. The current repository is configured for local assessment URLs; production origins and HTTPS proxy settings should be adjusted for the selected hosting provider.
-
-Persist `packages/backend/database.sqlite` on durable storage when deploying the backend. SQLite must not be placed on an ephemeral filesystem if records need to survive restarts.
-
 ## API overview
 
 All log routes require a JWT in the `Authorization: Bearer <token>` header.
@@ -221,43 +145,6 @@ All log routes require a JWT in the `Authorization: Bearer <token>` header.
 - Google credentials and JWT secrets belong only in local or deployment environment variables.
 - The optional sample data is deterministic and identical for every user; only its calendar dates are positioned relative to yesterday.
 - `*.sqlite`, `.env`, build output, and dependencies are excluded from Git.
-
-## Troubleshooting
-
-### `ENOENT: no such file or directory, open package.json`
-
-Run npm commands from the project root:
-
-```bash
-cd /path/to/mental-health-tracker
-npm run dev
-```
-
-### Backend fails after changing Node versions
-
-Select Node 22 and rebuild the native SQLite dependency:
-
-```bash
-nvm use 22
-npm rebuild sqlite3
-```
-
-### Google login is rejected
-
-Check that:
-
-- Both environment files contain the same Client ID.
-- `http://localhost:3000` is an Authorized JavaScript origin.
-- The account is included as a test user when the OAuth consent screen is in testing mode.
-- The development servers were restarted after editing environment files.
-
-### Frontend reports `ECONNREFUSED 127.0.0.1:5000`
-
-The backend is not running. Start both workspaces from the repository root:
-
-```bash
-npm run dev
-```
 
 ## Author
 
