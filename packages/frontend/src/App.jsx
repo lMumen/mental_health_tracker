@@ -163,7 +163,7 @@ function Dashboard() {
 function MainContent() {
   const { isAuthenticated } = useAuth();
   if (isAuthenticated) return <Dashboard />;
-  return <div className="flex min-h-screen items-center justify-center bg-[#fbf8ec] p-6"><GoogleAuthButton /></div>;
+  return <main className="login-stage flex min-h-screen items-center justify-center p-6"><GoogleAuthButton /></main>;
 }
 
 export default function App() {
