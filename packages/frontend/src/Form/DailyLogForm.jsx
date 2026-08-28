@@ -24,7 +24,7 @@ export default function DailyLogForm({ onLogSubmitted }) {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : value,
+      [name]: ['number', 'range'].includes(type) ? Number(value) : value,
     }));
   };
 

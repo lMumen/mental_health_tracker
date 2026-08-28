@@ -17,6 +17,6 @@
   "license": "ISC",
   "description": "Mental health tracker test application for LunaJoy",
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22.0.0"
   }
 }
