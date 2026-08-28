@@ -1,18 +1,20 @@
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import { getDb } from '../config/db.js';
-import { JWT_SECRET } from '../middleware/auth.js';
+import { getJwtSecret } from '../middleware/auth.js';
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
-const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client();
 
 export async function googleLogin(req, res) {
   const { credential } = req.body;
+  if (!credential) return res.status(400).json({ error: 'Google credential is required' });
 
   try {
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+    if (!googleClientId) throw new Error('GOOGLE_CLIENT_ID is required');
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
-      audience: GOOGLE_CLIENT_ID,
+      audience: googleClientId,
     });
 
     const { sub: googleId, email, name, picture } = ticket.getPayload();
@@ -25,7 +27,7 @@ export async function googleLogin(req, res) {
       [googleId, email, name, picture]
     );
 
-    const token = jwt.sign({ id: googleId, email, name, picture }, JWT_SECRET, {
+    const token = jwt.sign({ id: googleId, email, name, picture }, getJwtSecret(), {
       expiresIn: '7d',
     });
 

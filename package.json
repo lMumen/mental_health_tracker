@@ -1,7 +1,7 @@
 {
   "name": "mental-health-tracker",
   "version": "1.0.0",
- "private": true,
+  "private": true,
   "workspaces": [
     "packages/*"
   ],
@@ -15,5 +15,8 @@
   },
   "author": "Matias Rosas",
   "license": "ISC",
-  "description": "Mental health tracker test application for LunaJoy"
+  "description": "Mental health tracker test application for LunaJoy",
+  "engines": {
+    "node": ">=20.19.0"
+  }
 }

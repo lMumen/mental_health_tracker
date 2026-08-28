@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -6,6 +7,8 @@ import cors from 'cors';
 import { getDb } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import logRoutes from './routes/logRoutes.js';
+import jwt from 'jsonwebtoken';
+import { getJwtSecret } from './middleware/auth.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -32,13 +35,20 @@ app.use('/api/logs', logRoutes);
 getDb().catch(console.error);
 
 // WebSockets Connection Logic
-io.on('connection', (socket) => {
-  const userId = socket.handshake.query.userId;
-
-  if (userId) {
-    socket.join(userId);
-    console.log(`User connected to room: ${userId}`);
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) return next(new Error('Authentication required'));
+  try {
+    socket.user = jwt.verify(token, getJwtSecret());
+    next();
+  } catch {
+    next(new Error('Invalid or expired token'));
   }
+});
+
+io.on('connection', (socket) => {
+  socket.join(socket.user.id);
+  console.log(`User connected to room: ${socket.user.id}`);
 
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
