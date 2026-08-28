@@ -6,6 +6,7 @@ import DailyLogForm from './Form/DailyLogForm.jsx';
 import TrendsChart from './Charts/TrendsChart.jsx';
 import LogHistory from './History/LogHistory.jsx';
 import SampleDataPrompt from './components/SampleDataPrompt.jsx';
+import { Brain, Heart } from 'lucide-react';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -15,6 +16,7 @@ function Dashboard() {
   const [editingLog, setEditingLog] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLeavingWelcome, setIsLeavingWelcome] = useState(false);
+  const [showCompletionMessage, setShowCompletionMessage] = useState(false);
 
   const handleStartCheckIn = () => {
     if (isLeavingWelcome) return;
@@ -74,9 +76,12 @@ function Dashboard() {
             </div>
         </nav>
       </header>
-      <SampleDataPrompt user={user} token={token} onApplied={() => setView('trends')} />
-
-
+      <SampleDataPrompt
+        user={user}
+        token={token}
+        onApplied={() => setView('welcome')}
+        onDismiss={() => setView('welcome')}
+      />
       <main className={`relative mx-auto w-full max-w-5xl p-6 md:p-10 ${view === 'survey' ? 'survey-stage view-enter' : ''}`}>
         {view === 'welcome' && (
           <section className={`overflow-hidden rounded-3xl border border-[#dbe5d9] bg-[#fffdf7] shadow-sm ${isLeavingWelcome ? 'welcome-view-exit' : ''}`}>
@@ -86,7 +91,7 @@ function Dashboard() {
                 Take a quiet moment to check in with yourself
               </h1>
               <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-[#426b65]">
-                Record how you are feeling today. Your answers help you notice patterns over time and stay connected with your wellbeing.
+                Record how you are feeling today. Your answers will help you notice patterns over time and stay connected with your wellbeing.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <button type="button" onClick={handleStartCheckIn} disabled={isLeavingWelcome} className="rounded-xl bg-[#285b54] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1c4943] disabled:cursor-wait disabled:opacity-80">
@@ -106,7 +111,12 @@ function Dashboard() {
             logId={editingLog?.id}
             initialData={editingLog?.formData}
               onCancel={() => { setEditingLog(null); setView(editingLog ? 'history' : 'welcome'); }}
-              onLogSubmitted={() => { const wasEditing = Boolean(editingLog); setEditingLog(null); setView(wasEditing ? 'history' : 'trends'); }}
+              onLogSubmitted={() => {
+                const wasEditing = Boolean(editingLog);
+                setEditingLog(null);
+                setView(wasEditing ? 'history' : 'trends');
+                setShowCompletionMessage(true);
+              }}
               onEditExisting={(id, formData) => { setEditingLog({ id, formData }); setView('survey'); }}
           />
         )}
@@ -128,6 +138,24 @@ function Dashboard() {
           </div>
         )}
       </main>
+
+      {showCompletionMessage && (
+        <div className="completion-backdrop fixed inset-0 z-50 flex items-center justify-center bg-[rgba(23,63,59,0.35)] p-4 backdrop-blur-sm">
+          <section role="dialog" aria-modal="true" aria-labelledby="completion-title" aria-describedby="completion-description" className="completion-dialog w-full max-w-md overflow-hidden rounded-3xl border border-[#d7e2d5] bg-[#fffdf7] p-7 text-center shadow-2xl sm:p-9">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#e5eee4] text-[#285b54]">
+              <Brain aria-hidden="true" size={38} strokeWidth={1.7} />
+              <Heart aria-hidden="true" className="-ml-2 mt-8 fill-[#f4c96b] text-[#d79a20]" size={22} strokeWidth={2} />
+            </div>
+            <p className="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-[#2d6b62]">A moment of care</p>
+            <h2 id="completion-title" className="mt-2 text-2xl font-bold leading-tight text-[#173f3b]">Thank you for completing today’s check-in</h2>
+            <p id="completion-description" className="mt-4 text-sm leading-6 text-[#426b65]">Taking time to notice how you feel is a meaningful act of self-care. Be gentle with yourself as you move through the rest of your day.</p>
+            <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <button type="button" onClick={() => { setShowCompletionMessage(false); setView('welcome'); }} className="rounded-xl px-5 py-3 text-sm font-semibold text-[#426b65] transition hover:bg-[#edf3e8]">Return home</button>
+              <button type="button" autoFocus onClick={() => { setShowCompletionMessage(false); setView('trends'); }} className="rounded-xl bg-[#285b54] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1c4943]">View my wellbeing trends</button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

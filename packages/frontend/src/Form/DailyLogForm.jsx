@@ -157,7 +157,7 @@ export default function DailyLogForm({ onLogSubmitted, onCancel, onEditExisting,
     }
 
     if (!formData.logDate) {
-      setDuplicateNotice({ type: 'past', text: 'Please choose a date before continuing.' });
+      setDuplicateNotice({ type: 'past', text: 'Selecciona una fecha antes de continuar.' });
       return;
     }
 
@@ -177,8 +177,8 @@ export default function DailyLogForm({ onLogSubmitted, onCancel, onEditExisting,
       if (existingLog) {
         const today = createInitialFormData().logDate;
         setDuplicateNotice(existingLog.log_date === today
-          ? { type: 'today', log: existingLog, text: 'You have already checked in today. Would you like to update today’s entry?' }
-          : { type: 'past', text: 'You already have a check-in for this date. Please choose a different date to continue.' });
+          ? { type: 'today', log: existingLog, text: 'Ya existe un log para el día de hoy. ¿Quieres actualizarlo?' }
+          : { type: 'past', text: 'Ya existe un registro para esta fecha. Por favor, ingresa otra.' });
         return;
       }
 
@@ -215,8 +215,8 @@ export default function DailyLogForm({ onLogSubmitted, onCancel, onEditExisting,
           : null;
         const today = createInitialFormData().logDate;
         setDuplicateNotice(existingLog?.log_date === today
-          ? { type: 'today', log: existingLog, text: 'You have already checked in today. Would you like to update today’s entry?' }
-          : { type: 'past', text: 'You already have a check-in for this date. Please choose a different date to continue.' });
+          ? { type: 'today', log: existingLog, text: 'Ya existe un log para el día de hoy. ¿Quieres actualizarlo?' }
+          : { type: 'past', text: 'Ya existe un registro para esta fecha. Por favor, ingresa otra.' });
         setStep(1);
         return;
       }
@@ -262,7 +262,7 @@ export default function DailyLogForm({ onLogSubmitted, onCancel, onEditExisting,
           <p className="text-sm font-semibold leading-6">{duplicateNotice.text}</p>
           <div className="mt-4 flex flex-wrap justify-end gap-2">
             <button type="button" onClick={() => setDuplicateNotice(null)} className="rounded-lg px-4 py-2 text-sm font-semibold text-[#6d5923] hover:bg-[#f8dda0]">
-              {duplicateNotice.type === 'today' ? 'Maybe later' : 'Choose another date'}
+              {duplicateNotice.type === 'today' ? 'Ahora no' : 'Elegir otra fecha'}
             </button>
             {duplicateNotice.type === 'today' && (
               <button
@@ -270,7 +270,7 @@ export default function DailyLogForm({ onLogSubmitted, onCancel, onEditExisting,
                 onClick={() => onEditExisting?.(duplicateNotice.log.id, toEditableFormData(duplicateNotice.log))}
                 className="rounded-lg bg-[#285b54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1c4943]"
               >
-                Update today’s check-in
+                Actualizar log de hoy
               </button>
             )}
           </div>

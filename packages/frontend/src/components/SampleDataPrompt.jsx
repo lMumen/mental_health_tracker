@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export default function SampleDataPrompt({ user, token, onApplied }) {
+export default function SampleDataPrompt({ user, token, onApplied, onDismiss }) {
   const [visible, setVisible] = useState(false);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState('');
@@ -9,18 +9,12 @@ export default function SampleDataPrompt({ user, token, onApplied }) {
   useEffect(() => {
     if (localStorage.getItem(dismissalKey)) return;
 
-    const now = new Date();
-    const today = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 10);
-
     fetch('/api/logs', { headers: { Authorization: 'Bearer ' + token } })
       .then(async (response) => {
         const logs = await response.json();
         if (!response.ok) throw new Error(logs.error || 'Could not check your history.');
-        const hasPreviousHistory = Array.isArray(logs)
-          && logs.some((log) => log.log_date < today);
-        if (!hasPreviousHistory) setVisible(true);
+        const hasAnyData = Array.isArray(logs) && logs.length > 0;
+        if (!hasAnyData) setVisible(true);
       })
       .catch(() => {});
   }, [dismissalKey, token]);
@@ -29,6 +23,7 @@ export default function SampleDataPrompt({ user, token, onApplied }) {
     localStorage.setItem(dismissalKey, 'true');
     setVisible(false);
     setError('');
+    onDismiss?.();
   };
 
   const applySampleData = async () => {
