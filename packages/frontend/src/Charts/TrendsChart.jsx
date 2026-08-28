@@ -4,14 +4,15 @@ import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const PERIODS = {
-  weekly: { label: 'Weekly', days: 7 },
-  monthly: { label: 'Monthly', days: 30 },
+  weekly: { label: 'Weekly', days: 7, bucketDays: 1, summary: 'Daily values' },
+  monthly: { label: 'Monthly', days: 30, bucketDays: 3, summary: '3-day averages' },
+  quarterly: { label: '3 Months', days: 90, bucketDays: 7, summary: 'Weekly averages' },
 };
 
 export default function TrendsChart() {
   const { token, user } = useAuth();
   const [logs, setLogs] = useState([]);
-  const [period, setPeriod] = useState('weekly');
+  const [period, setPeriod] = useState('quarterly');
 
   useEffect(() => {
     fetch('/api/logs', { headers: { Authorization: `Bearer ${token}` } })
@@ -31,7 +32,7 @@ export default function TrendsChart() {
     const cutoff = new Date(today);
     cutoff.setDate(today.getDate() - (PERIODS[period].days - 1));
 
-    return logs
+    const dailyData = logs
       .map((log) => {
         const rawDate = log.log_date || log.created_at.slice(0, 10);
         const dateValue = new Date(`${rawDate}T12:00:00`);
@@ -45,6 +46,29 @@ export default function TrendsChart() {
       })
       .filter((log) => log.dateValue >= cutoff && log.dateValue <= today)
       .sort((a, b) => a.dateValue - b.dateValue);
+
+    const bucketDays = PERIODS[period].bucketDays;
+    if (bucketDays === 1) return dailyData;
+
+    const averagedData = [];
+    for (let index = 0; index < dailyData.length; index += bucketDays) {
+      const bucket = dailyData.slice(index, index + bucketDays);
+      const average = (field) => Number(
+        (bucket.reduce((sum, entry) => sum + Number(entry[field]), 0) / bucket.length).toFixed(2),
+      );
+      const first = bucket[0];
+      const last = bucket[bucket.length - 1];
+      const firstLabel = first.dateValue.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const lastLabel = last.dateValue.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      averagedData.push({
+        dateValue: first.dateValue,
+        date: firstLabel === lastLabel ? firstLabel : firstLabel + ' – ' + lastLabel,
+        Mood: average('Mood'),
+        Anxiety: average('Anxiety'),
+        Sleep: average('Sleep'),
+      });
+    }
+    return averagedData;
   }, [logs, period]);
 
   return (
@@ -52,7 +76,7 @@ export default function TrendsChart() {
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
           <h2 className="text-xl font-bold text-[#173f3b]">Wellness Trends</h2>
-          <p className="mt-1 text-xs text-[#81958f]">Real-time mood, anxiety and sleep trends</p>
+          <p className="mt-1 text-xs text-[#81958f]">Mood, anxiety and sleep · {PERIODS[period].summary}</p>
         </div>
         <div className="inline-flex self-start rounded-lg bg-[#eef0e2] p-1" aria-label="Trend period">
           {Object.entries(PERIODS).map(([value, config]) => (
@@ -69,7 +93,7 @@ export default function TrendsChart() {
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={formattedData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e7e4d3" />
-            <XAxis dataKey="date" stroke="#78908a" fontSize={12} />
+            <XAxis dataKey="date" stroke="#78908a" fontSize={12} minTickGap={28} />
             <YAxis stroke="#78908a" fontSize={12} />
             <Tooltip />
             <Legend />

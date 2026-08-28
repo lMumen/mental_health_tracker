@@ -1,5 +1,6 @@
 import { getDb } from '../config/db.js';
 import { logSchema } from '../schemas/logSchema.js';
+import { SAMPLE_LOG_DATASET } from '../data/sampleLogDataset.js';
 
 export async function createLog(req, res) {
   const validation = logSchema.safeParse(req.body);
@@ -60,7 +61,6 @@ export async function createLog(req, res) {
 
     const newLog = await db.get('SELECT * FROM daily_logs WHERE id = ?', [result.lastID]);
 
-    // WebSocket broadcast to specific user room
     const io = req.app.get('io');
     if (io) {
       io.to(userId).emit('log_added', newLog);
@@ -121,9 +121,103 @@ export async function updateLog(req, res) {
   res.json(updatedLog);
 }
 
+
+function dateFromDaysAgo(today, daysAgo) {
+  const date = new Date(`${today}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - daysAgo);
+  return date.toISOString().slice(0, 10);
+}
+
+export async function applySampleData(req, res) {
+  const timeZone = process.env.APP_TIME_ZONE || 'America/Santiago';
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date());
+  const db = await getDb();
+  let inserted = 0;
+
+  try {
+    await db.exec('BEGIN');
+    for (const sample of SAMPLE_LOG_DATASET) {
+      const logDate = dateFromDaysAgo(today, sample.daysAgo);
+      const result = await db.run(
+        `INSERT OR IGNORE INTO daily_logs (
+          user_id, mood_rating, anxiety_level, activity_type, activity_duration,
+          sleep_hours, sleep_quality, sleep_disturbances, social_engagements,
+          stress_level, symptoms, log_date, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          req.user.id,
+          sample.moodRating,
+          sample.anxietyLevel,
+          sample.activityType,
+          sample.activityDuration,
+          sample.sleepHours,
+          sample.sleepQuality,
+          JSON.stringify(sample.sleepDisturbances),
+          sample.socialEngagements,
+          sample.stressLevel,
+          JSON.stringify(sample.symptoms),
+          logDate,
+          `${logDate} 20:00:00`,
+        ],
+      );
+      inserted += result.changes;
+    }
+    await db.exec('COMMIT');
+
+    const range = {
+      from: dateFromDaysAgo(today, 90),
+      to: dateFromDaysAgo(today, 1),
+    };
+    req.app.get('io')?.to(req.user.id).emit('sample_data_added', { inserted, range });
+    res.status(201).json({
+      message: inserted
+        ? 'Sample wellbeing data was added successfully.'
+        : 'The sample dates are already present in your history.',
+      inserted,
+      total: SAMPLE_LOG_DATASET.length,
+      range,
+    });
+  } catch (error) {
+    await db.exec('ROLLBACK');
+    console.error('Error applying sample data:', error);
+    res.status(500).json({ error: 'Could not add the sample wellbeing data.' });
+  }
+}
+
 export async function getLogs(req, res) {
   try {
     const db = await getDb();
+    const requestedPage = Number.parseInt(req.query.page, 10);
+
+    if (Number.isInteger(requestedPage) && requestedPage > 0) {
+      const requestedLimit = Number.parseInt(req.query.limit, 10);
+      const limit = Number.isInteger(requestedLimit)
+        ? Math.min(Math.max(requestedLimit, 1), 50)
+        : 10;
+      const offset = (requestedPage - 1) * limit;
+      const { total } = await db.get(
+        'SELECT COUNT(*) AS total FROM daily_logs WHERE user_id = ?',
+        [req.user.id],
+      );
+      const logs = await db.all(
+        `SELECT * FROM daily_logs
+         WHERE user_id = ?
+         ORDER BY log_date DESC, created_at DESC
+         LIMIT ? OFFSET ?`,
+        [req.user.id, limit, offset],
+      );
+
+      return res.json({
+        logs,
+        pagination: {
+          page: requestedPage,
+          limit,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / limit)),
+        },
+      });
+    }
+
     const logs = await db.all(
       'SELECT * FROM daily_logs WHERE user_id = ? ORDER BY log_date ASC, created_at ASC',
       [req.user.id]

@@ -5,11 +5,12 @@ import GoogleAuthButton from './components/Auth/GoogleAuthButton.jsx';
 import DailyLogForm from './Form/DailyLogForm.jsx';
 import TrendsChart from './Charts/TrendsChart.jsx';
 import LogHistory from './History/LogHistory.jsx';
+import SampleDataPrompt from './components/SampleDataPrompt.jsx';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const [view, setView] = useState('welcome');
   const [editingLog, setEditingLog] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -73,6 +74,8 @@ function Dashboard() {
             </div>
         </nav>
       </header>
+      <SampleDataPrompt user={user} token={token} onApplied={() => setView('trends')} />
+
 
       <main className={`relative mx-auto w-full max-w-5xl p-6 md:p-10 ${view === 'survey' ? 'survey-stage view-enter' : ''}`}>
         {view === 'welcome' && (

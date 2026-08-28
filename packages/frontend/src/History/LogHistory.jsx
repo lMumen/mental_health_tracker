@@ -39,16 +39,42 @@ export default function LogHistory({ onBack, onEdit }) {
   const { token } = useAuth();
   const [logs, setLogs] = useState([]);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, total: 0, totalPages: 1 });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/logs', { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`/api/logs?page=${page}&limit=10`, { headers: { Authorization: `Bearer ${token}` } })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Could not load history');
-        setLogs(Array.isArray(data) ? [...data].reverse() : []);
+        if (Array.isArray(data.logs)) {
+          setLogs(data.logs);
+          setPagination(data.pagination ?? { page, total: data.logs.length, totalPages: 1 });
+          return;
+        }
+
+        if (Array.isArray(data)) {
+          const newestFirst = [...data].reverse();
+          const start = (page - 1) * 10;
+          setLogs(newestFirst.slice(start, start + 10));
+          setPagination({ page, total: data.length, totalPages: Math.max(1, Math.ceil(data.length / 10)) });
+          return;
+        }
+        throw new Error('The history response was not in the expected format.');
       })
-      .catch((requestError) => setError(requestError.message));
-  }, [token]);
+      .catch((requestError) => {
+        setLogs([]);
+        setError(requestError.message);
+      })
+      .finally(() => setLoading(false));
+  }, [page, token]);
+
+  const changePage = (nextPage) => {
+    setLoading(true);
+    setError('');
+    setPage(nextPage);
+  };
 
   const today = localToday();
 
@@ -62,10 +88,10 @@ export default function LogHistory({ onBack, onEdit }) {
         </div>
       </div>
 
-      {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</p>}
-      {!error && logs.length === 0 && <div className="rounded-2xl border border-[#d9d8c7] bg-[#fffdf7] p-10 text-center text-sm text-[#648079]">No check-ins recorded yet.</div>}
+      {error && <p role="alert" className="rounded-xl border border-[#e8c86a] bg-[#fff2cf] p-4 text-sm text-[#6d5923]">{error}</p>}
+      {!loading && !error && logs.length === 0 && <div className="rounded-2xl border border-[#d9d8c7] bg-[#fffdf7] p-10 text-center text-sm text-[#648079]">No check-ins recorded yet.</div>}
 
-      <div className="space-y-4">
+      <div className={loading ? 'hidden' : 'space-y-4'}>
         {logs.map((log) => {
           const symptoms = parseJson(log.symptoms, { present: false, types: [], severity: 0 });
           return (
@@ -93,6 +119,33 @@ export default function LogHistory({ onBack, onEdit }) {
             </article>
           );
         })}
+
+      {!loading && !error && pagination.totalPages > 1 && (
+        <nav className="mt-6 flex flex-col items-center justify-between gap-3 rounded-2xl border border-[#d9d8c7] bg-[rgba(255,253,247,0.78)] p-3 sm:flex-row" aria-label="Check-in history pages">
+          <p className="text-sm text-[#648079]">
+            Page <span className="font-semibold text-[#285b54]">{pagination.page}</span> of <span className="font-semibold text-[#285b54]">{pagination.totalPages}</span>
+            <span className="ml-2 text-xs">({pagination.total} entries)</span>
+          </p>
+          <div className="flex w-full gap-2 sm:w-auto">
+            <button
+              type="button"
+              onClick={() => changePage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="flex-1 rounded-xl border border-[#bfd2c8] px-4 py-2 text-sm font-semibold text-[#285b54] transition hover:bg-[#e9f0e8] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() => changePage(Math.min(pagination.totalPages, page + 1))}
+              disabled={page >= pagination.totalPages}
+              className="flex-1 rounded-xl bg-[#285b54] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1c4943] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
+            >
+              Next
+            </button>
+          </div>
+        </nav>
+      )}
       </div>
     </section>
   );
