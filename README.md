@@ -29,7 +29,6 @@ Install the following before starting:
 
 - Node.js 22 or newer
 - npm
-- A Google OAuth Web Client ID
 
 The repository includes an [.nvmrc](./.nvmrc) file for Node 22.
 
@@ -86,7 +85,6 @@ Create `packages/backend/.env`:
 PORT=5000
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 JWT_SECRET=replace-with-a-long-random-value
-APP_TIME_ZONE=America/Santiago
 ```
 
 The frontend and backend must use the same Google Client ID.
