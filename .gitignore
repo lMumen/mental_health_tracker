@@ -1,0 +1,17 @@
+
+node_modules/
+.pnpm-store/
+
+*.sqlite
+*.sqlite-journal
+
+.env
+.env.local
+
+
+dist/
+build/
+
+.DS_Store
+.vscode/
+.idea/

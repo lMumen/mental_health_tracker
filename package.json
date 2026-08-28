@@ -1,0 +1,19 @@
+{
+  "name": "mental-health-tracker",
+  "version": "1.0.0",
+ "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "author": "Matias Rosas",
+  "license": "ISC",
+  "description": "Mental health tracker test application for LunaJoy"
+}
