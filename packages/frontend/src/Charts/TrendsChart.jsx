@@ -48,15 +48,15 @@ export default function TrendsChart() {
   }, [logs, period]);
 
   return (
-    <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border border-[#e8e5d5] bg-[#fffdf7] p-6 shadow-sm">
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Wellness Trends</h2>
-          <p className="mt-1 text-xs text-slate-400">Real-time mood, anxiety and sleep trends</p>
+          <h2 className="text-xl font-bold text-[#173f3b]">Wellness Trends</h2>
+          <p className="mt-1 text-xs text-[#81958f]">Real-time mood, anxiety and sleep trends</p>
         </div>
-        <div className="inline-flex self-start rounded-lg bg-slate-100 p-1" aria-label="Trend period">
+        <div className="inline-flex self-start rounded-lg bg-[#eef0e2] p-1" aria-label="Trend period">
           {Object.entries(PERIODS).map(([value, config]) => (
-            <button key={value} type="button" onClick={() => setPeriod(value)} aria-pressed={period === value} className={`rounded-md px-4 py-2 text-sm font-semibold transition ${period === value ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+            <button key={value} type="button" onClick={() => setPeriod(value)} aria-pressed={period === value} className={`rounded-md px-4 py-2 text-sm font-semibold transition ${period === value ? 'bg-[#fffdf7] text-[#1f5a52] shadow-sm' : 'text-[#648079] hover:text-[#285b54]'}`}>
               {config.label}
             </button>
           ))}
@@ -64,18 +64,18 @@ export default function TrendsChart() {
       </div>
 
       {formattedData.length === 0 ? (
-        <div className="py-12 text-center text-sm text-slate-400">No entries in the selected {PERIODS[period].label.toLowerCase()} period.</div>
+        <div className="py-12 text-center text-sm text-[#81958f]">No entries in the selected {PERIODS[period].label.toLowerCase()} period.</div>
       ) : (
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={formattedData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-            <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
-            <YAxis stroke="#94a3b8" fontSize={12} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e7e4d3" />
+            <XAxis dataKey="date" stroke="#78908a" fontSize={12} />
+            <YAxis stroke="#78908a" fontSize={12} />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="Mood" stroke="#0ea5e9" strokeWidth={2} name="Mood Rating (1-5)" />
-            <Line type="monotone" dataKey="Anxiety" stroke="#ef4444" strokeWidth={2} name="Anxiety Level (1-5)" />
-            <Line type="monotone" dataKey="Sleep" stroke="#8b5cf6" strokeWidth={2} name="Sleep (Hours)" />
+            <Line type="monotone" dataKey="Mood" stroke="#2d6b62" strokeWidth={2} name="Mood Rating (1-5)" />
+            <Line type="monotone" dataKey="Anxiety" stroke="#d79032" strokeWidth={2} name="Anxiety Level (1-5)" />
+            <Line type="monotone" dataKey="Sleep" stroke="#7d9170" strokeWidth={2} name="Sleep (Hours)" />
           </LineChart>
         </ResponsiveContainer>
       )}
